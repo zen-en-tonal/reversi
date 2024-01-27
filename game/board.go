@@ -5,6 +5,7 @@ import (
 )
 
 const BOARDSIZE int = 8
+const FIRST Color = BLACK
 
 type Board struct {
 	history []Command
@@ -28,7 +29,7 @@ func NewBoard() Board {
 	return b
 }
 
-func (b *Board) Clone() Board {
+func (b Board) Clone() Board {
 	h := make([]Command, len(b.history))
 	copy(h, b.history)
 	p := make(map[Place]Color)
@@ -44,9 +45,6 @@ func (b *Board) Clone() Board {
 func (b Board) Logs() []string {
 	var logs []string
 	for _, c := range b.history {
-		if c.WhoDoes() == None {
-			continue
-		}
 		logs = append(logs, c.Describe())
 	}
 	return logs
@@ -57,7 +55,14 @@ func (b Board) Pieces() map[Place]Color {
 }
 
 func (b Board) WhoesTurn() Color {
+	if len(b.history) == 0 {
+		return FIRST
+	}
 	return b.history[len(b.history)-1].WhoDoes().Opposite()
+}
+
+func (b Board) TurnCount() int {
+	return len(b.history)
 }
 
 func (b *Board) Undo(num int) error {
@@ -165,13 +170,13 @@ func (p path) intoFlips() []flipPiece {
 	return f
 }
 
-func (b Board) inBound(p Place) bool {
+func (b Board) IsInBound(p Place) bool {
 	return p.x >= 0 || p.x < BOARDSIZE || p.y >= 0 || p.y < BOARDSIZE
 }
 
 func (b *Board) placePiece(x int, y int, c Color) error {
 	place := Place{x, y}
-	if !b.inBound(place) {
+	if !b.IsInBound(place) {
 		return errors.New("out of range")
 	}
 	b.pieces[place] = c
@@ -180,7 +185,7 @@ func (b *Board) placePiece(x int, y int, c Color) error {
 
 func (b Board) GetPiece(x int, y int) (*Color, error) {
 	place := Place{x, y}
-	if !b.inBound(place) {
+	if !b.IsInBound(place) {
 		return nil, errors.New("out of range")
 	}
 	c := b.pieces[place]
