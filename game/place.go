@@ -5,7 +5,7 @@ import "fmt"
 type PlacePiece struct {
 	who   Color
 	place Place
-	flips []FlipPiece
+	flips []flipPiece
 }
 
 func placePiece(x int, y int, c Color) PlacePiece {

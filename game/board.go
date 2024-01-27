@@ -157,10 +157,10 @@ func (p path) walkNext(d direction) path {
 	return p
 }
 
-func (p path) intoFlips() []FlipPiece {
-	var f []FlipPiece
+func (p path) intoFlips() []flipPiece {
+	var f []flipPiece
 	for _, l := range p.log {
-		f = append(f, FlipPiece{place: l})
+		f = append(f, flipPiece{place: l})
 	}
 	return f
 }

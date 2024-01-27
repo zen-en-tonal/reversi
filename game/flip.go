@@ -2,15 +2,15 @@ package game
 
 import "errors"
 
-type FlipPiece struct {
+type flipPiece struct {
 	place Place
 }
 
-func (c FlipPiece) WhoDoes() Color {
+func (c flipPiece) WhoDoes() Color {
 	return None
 }
 
-func (c FlipPiece) Commit(b *Board) error {
+func (c flipPiece) Commit(b *Board) error {
 	color, err := b.GetPiece(c.place.x, c.place.y)
 	if err != nil {
 		return err
@@ -21,6 +21,6 @@ func (c FlipPiece) Commit(b *Board) error {
 	return b.placePiece(c.place.x, c.place.y, color.Opposite())
 }
 
-func (c FlipPiece) Describe() string {
+func (c flipPiece) Describe() string {
 	return "flips."
 }
