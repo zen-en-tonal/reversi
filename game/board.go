@@ -17,18 +17,19 @@ func NewBoard() Board {
 	b.pieces = make(map[Place]Color)
 	for y := 0; y < BOARDSIZE; y++ {
 		for x := 0; x < BOARDSIZE; x++ {
-			b.placePiece(x, y, None)
+			b.placePiece(NewPlace(x, y), None)
 		}
 	}
 	// 初期配置
-	b.placePiece(3, 3, WHITE)
-	b.placePiece(4, 3, BLACK)
-	b.placePiece(3, 4, BLACK)
-	b.placePiece(4, 4, WHITE)
+	b.placePiece(NewPlace(3, 3), WHITE)
+	b.placePiece(NewPlace(4, 3), BLACK)
+	b.placePiece(NewPlace(3, 4), BLACK)
+	b.placePiece(NewPlace(4, 4), WHITE)
 
 	return b
 }
 
+// ディープコピーする。
 func (b Board) Clone() Board {
 	h := make([]Command, len(b.history))
 	copy(h, b.history)
@@ -65,6 +66,7 @@ func (b Board) TurnCount() int {
 	return len(b.history)
 }
 
+// 盤面をnum回巻き戻す
 func (b *Board) Undo(num int) error {
 	numToCommit := len(b.history) - num
 	if numToCommit < 0 {
@@ -81,6 +83,18 @@ func (b *Board) Undo(num int) error {
 	return nil
 }
 
+// Undoと同様。
+// 失敗時はpanicする。
+func (b *Board) MustUndo(num int) {
+	err := b.Undo(num)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// 得点を取得する。
+// Board.Score()[BLACK] = 黒の得点
+// Board.Score()[WHITE] = 白の得点
 func (b Board) Score() map[Color]int {
 	m := make(map[Color]int)
 	m[BLACK] = 0
@@ -96,6 +110,8 @@ func (b Board) Score() map[Color]int {
 	return m
 }
 
+// 盤面に対してCommand.Commitを実行する。
+// Command.Commitが失敗した場合は、盤面に作用しない。
 func (b *Board) MakeEffect(c Command) error {
 	nb := b.Clone()
 	err := c.Commit(&nb)
@@ -109,7 +125,16 @@ func (b *Board) MakeEffect(c Command) error {
 	return nil
 }
 
-func (b Board) Hints(c Color) ([]PlacePiece, error) {
+// MakeEffectと同様。
+// Command.Commitが失敗した場合はpanicする。
+func (b *Board) MustMakeEffect(c Command) {
+	err := b.MakeEffect(c)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (b Board) Hints(c Color) []PlacePiece {
 	var ps []PlacePiece
 	for place, color := range b.pieces {
 
@@ -134,11 +159,11 @@ func (b Board) Hints(c Color) ([]PlacePiece, error) {
 
 	}
 
-	return ps, nil
+	return ps
 }
 
 func (b Board) scan(expect Color, d direction, p path) *path {
-	currentColor, err := b.GetPiece(p.current.x, p.current.y)
+	currentColor, err := b.GetPiece(p.current)
 	if err != nil {
 		return nil
 	}
@@ -174,8 +199,7 @@ func (b Board) IsInBound(p Place) bool {
 	return p.x >= 0 || p.x < BOARDSIZE || p.y >= 0 || p.y < BOARDSIZE
 }
 
-func (b *Board) placePiece(x int, y int, c Color) error {
-	place := Place{x, y}
+func (b *Board) placePiece(place Place, c Color) error {
 	if !b.IsInBound(place) {
 		return errors.New("out of range")
 	}
@@ -183,8 +207,7 @@ func (b *Board) placePiece(x int, y int, c Color) error {
 	return nil
 }
 
-func (b Board) GetPiece(x int, y int) (*Color, error) {
-	place := Place{x, y}
+func (b Board) GetPiece(place Place) (*Color, error) {
 	if !b.IsInBound(place) {
 		return nil, errors.New("out of range")
 	}
@@ -225,32 +248,22 @@ type Place struct {
 	y int
 }
 
+func NewPlace(x, y int) Place {
+	return Place{x, y}
+}
+
 func (p Place) next(d direction) Place {
-	if d == UP {
-		return Place{x: p.x, y: p.y - 1}
+	directions := map[direction]Place{
+		UP:         {x: p.x, y: p.y - 1},
+		DOWN:       {x: p.x, y: p.y + 1},
+		LEFT:       {x: p.x - 1, y: p.y},
+		RIGHT:      {x: p.x + 1, y: p.y},
+		UP_LEFT:    {x: p.x - 1, y: p.y - 1},
+		UP_RIGHT:   {x: p.x + 1, y: p.y - 1},
+		DOWN_LEFT:  {x: p.x - 1, y: p.y + 1},
+		DOWN_RIGHT: {x: p.x + 1, y: p.y + 1},
 	}
-	if d == DOWN {
-		return Place{x: p.x, y: p.y + 1}
-	}
-	if d == LEFT {
-		return Place{x: p.x - 1, y: p.y}
-	}
-	if d == RIGHT {
-		return Place{x: p.x + 1, y: p.y}
-	}
-	if d == UP_LEFT {
-		return Place{x: p.x - 1, y: p.y - 1}
-	}
-	if d == UP_RIGHT {
-		return Place{x: p.x + 1, y: p.y - 1}
-	}
-	if d == DOWN_LEFT {
-		return Place{x: p.x - 1, y: p.y + 1}
-	}
-	if d == DOWN_RIGHT {
-		return Place{x: p.x + 1, y: p.y + 1}
-	}
-	panic("invalid direction")
+	return directions[d]
 }
 
 type direction int

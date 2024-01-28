@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -9,26 +8,21 @@ import (
 func TestHints(t *testing.T) {
 	b := NewBoard()
 
-	b.placePiece(3, 2, BLACK)
-	b.placePiece(3, 3, BLACK)
+	b.placePiece(NewPlace(3, 2), BLACK)
+	b.placePiece(NewPlace(3, 3), BLACK)
 
-	hints, err := b.Hints(WHITE)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	hints := b.Hints(WHITE)
 	if len(hints) != 3 {
-		t.Error(hints)
+		t.Errorf("length of hints must be 3 but it was %d", len(hints))
 	}
-	t.Log(hints)
 }
 
 func TestUndo(t *testing.T) {
 	b := NewBoard()
 
-	p, _ := b.Hints(WHITE)
-	b.MakeEffect(p[0])
-	b.Undo(1)
+	p := b.Hints(WHITE)
+	b.MustMakeEffect(p[0])
+	b.MustUndo(1)
 
 	if !reflect.DeepEqual(b.pieces, NewBoard().pieces) {
 		t.Error("invalid states.")
@@ -50,11 +44,8 @@ func TestGame(t *testing.T) {
 	}
 
 	for _, c := range comamnds {
-		hints, err := board.Hints(c.Color)
-		if err != nil {
-			t.Error(err)
-			return
-		}
+
+		hints := board.Hints(c.Color)
 		var command Command
 		for _, h := range hints {
 			if h.place == c.Place {
@@ -63,20 +54,15 @@ func TestGame(t *testing.T) {
 			}
 		}
 		if command == nil {
-			t.Error(hints, board)
+			t.Errorf("expected command is not found in hints.")
 			return
 		}
-		err = board.MakeEffect(command)
-		if err != nil {
-			t.Error(err)
-			return
-		}
+
+		board.MustMakeEffect(command)
 	}
 
 	score := board.Score()
 	if score[BLACK] != 8 || score[WHITE] != 1 {
-		t.Error("invalid score")
+		t.Errorf("expected score is {black: 8, white: 1} but actual is {black: %d, white: %d}", score[BLACK], score[WHITE])
 	}
-
-	fmt.Println(board.Logs())
 }

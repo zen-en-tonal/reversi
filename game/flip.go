@@ -11,14 +11,14 @@ func (c flipPiece) WhoDoes() Color {
 }
 
 func (c flipPiece) Commit(b *Board) error {
-	color, err := b.GetPiece(c.place.x, c.place.y)
+	color, err := b.GetPiece(c.place)
 	if err != nil {
 		return err
 	}
 	if *color == None {
 		return errors.New("invalid operation")
 	}
-	return b.placePiece(c.place.x, c.place.y, color.Opposite())
+	return b.placePiece(c.place, color.Opposite())
 }
 
 func (c flipPiece) Describe() string {

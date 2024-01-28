@@ -21,7 +21,7 @@ func (c PlacePiece) WhoDoes() Color {
 }
 
 func (c PlacePiece) Commit(b *Board) error {
-	err := b.placePiece(c.place.x, c.place.y, c.WhoDoes())
+	err := b.placePiece(c.place, c.WhoDoes())
 	if err != nil {
 		return err
 	}
